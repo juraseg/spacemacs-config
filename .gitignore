@@ -1,0 +1,6 @@
+my-cfg/config.org.bak
+my-cfg/config.el
+my-cfg/private.*
+*~
+*.elc
+.DS_Store

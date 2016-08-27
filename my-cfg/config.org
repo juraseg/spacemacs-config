@@ -1,0 +1,381 @@
+#+TITLE: Emacs Configuration
+#+AUTHOR: Yuri Abzyanov
+
+This is the configuration file for emacs in ORG format. It allows storing configuration
+together with explanation of each config.
+Shamelessly stolen from [[https://github.com/danielmai/.emacs.d][here]]
+
+* Installing Emacs
+
+On OS X, [[http://brew.sh/][homebrew]] is an easy way to install emacs.
+
+Here's what the parameter means.
+- ~--with-cocoa~ :: installs emacs with the OS X GUI version
+- ~--with-imagemagick~ :: installs emacs with imagemagick support for image processing
+- ~--with-gnutls~ :: installs emacs with GnuTLS to utilize encrypted SSL and TLS connections
+
+#+begin_src sh
+brew install emacs --with-cocoa --with-imagemagick --with-gnutls
+#+end_src
+
+* Personal Information
+
+#+begin_src emacs-lisp
+(setq user-full-name "Yuri Abzyanov"
+      user-mail-address "yuri_abzyanov@fastmail.fm")
+#+end_src
+
+* Preconfig
+** Initialize packages
+
+#+begin_src emacs-lisp
+(require 'package)
+(add-to-list 'package-archives
+             '("melpa" . "http://melpa.org/packages/") t)
+(package-initialize)
+
+(when (not package-archive-contents)
+  (package-refresh-contents))
+#+end_src
+
+*** Bootstrap use-package
+
+Install use-package if it's not already installed.
+use-package is used to configure the rest of the packages.
+
+#+begin_src emacs-lisp
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(eval-when-compile
+  (require 'use-package))
+#+end_src
+
+** Diminish
+
+Install diminish package so can be used when loading packages
+
+#+begin_src emacs-lisp
+(use-package diminish
+  :ensure t)
+#+end_src
+   
+* Theme
+** Convenient theme functions
+
+#+begin_src emacs-lisp
+(defun switch-theme (theme)
+  "Disables any currently active themes and loads THEME."
+  ;; This interactive call is taken from `load-theme'
+  (interactive
+   (list
+    (intern (completing-read "Load custom theme: "
+                             (mapc 'symbol-name
+                                   (custom-available-themes))))))
+  (let ((enabled-themes custom-enabled-themes))
+    (mapc #'disable-theme custom-enabled-themes)
+    (load-theme theme t)))
+
+(defun disable-active-themes ()
+  "Disables any currently active themes listed in `custom-enabled-themes'."
+  (interactive)
+  (mapc #'disable-theme custom-enabled-themes))
+
+(bind-key "s-<f12>" 'switch-theme)
+(bind-key "s-<f11>" 'disable-active-themes)
+#+end_src
+
+* Common config
+** Config folder
+
+I store my confifuration files in subfolder in .emacs.d folder
+#+begin_src emacs-lisp
+(add-to-list 'load-path (expand-file-name "my-cfg" dotspacemacs-directory))
+#+end_src
+
+** Backups folder
+
+Emacs by default saves backups in the current directory (which is usually the directory
+where file is located). This creates a lot of unnecessary files, so just change
+backup folder to something in .emacs.d
+
+#+begin_src emacs-lisp
+(setq backup-directory-alist '(("." . (expand-file-name "backups" dotspacemacs-directory))))
+#+end_src
+
+** Change yes/no to y/n
+
+#+begin_src emacs-lisp
+(fset 'yes-or-no-p 'y-or-n-p)
+#+end_src
+
+** Repl
+
+Alias for Emacs REPL
+
+#+begin_src emacs-lisp
+(defun repl() (interactive) (ielm))
+#+end_src
+
+** Deleted files go to trash
+
+#+begin_src emacs-lisp
+(setq delete-by-moving-to-trash t)
+#+end_src
+   
+* Mac-specific configuration
+
+Should do this before all other configuration as issues it fixes can cause troubles in other configurations
+  
+** Fix for shell
+
+Fixes path for Emacs in Mac OSX
+   
+#+begin_src emacs-lisp
+(use-package exec-path-from-shell
+  :if (memq window-system '(mac ns))
+  :ensure t
+  :init
+  (exec-path-from-shell-initialize))
+#+end_src
+
+* Org
+** Agenda configuration
+*** Files configuration
+
+#+begin_src emacs-lisp
+(setq org-agenda-show-all-dates t)
+(setq org-agenda-start-on-weekday nil)
+(setq org-agenda-skip-deadline-if-done nil) ; need this for EOD
+(setq org-agenda-sorting-strategy '((agenda habit-down time-up priority-down category-keep)
+				    (todo priority-down category-keep)
+				    (tags priority-down category-keep)
+				    (search category-keep)))
+(setq org-agenda-overriding-columns-format "%CATEGORY %35ITEM %3PRIORITY %TODO %TAGS")
+(setq org-reverse-note-order t)
+
+(setq org-agenda-custom-commands
+      (quote (("d" todo "DELEGATED" nil)
+	      ("c" todo "DONE|DEFERRED|CANCELLED" nil)
+	      ("w" todo "WAITING" nil)
+	      ("W" agenda "" ((org-agenda-ndays 21)))
+	      ("A" agenda ""
+	       ((org-agenda-skip-function
+		 (lambda nil
+		   (org-agenda-skip-entry-if 'notregexp "\\=.*\\[#A\\]")))
+		(org-agenda-ndays 1)
+		(org-agenda-overriding-header "Today's Priority #A tasks: ")))
+	      ("u" alltodo ""
+	       ((org-agenda-skip-function
+		 (lambda nil
+		   (org-agenda-skip-entry-if 'scheduled 'deadline
+					     'regexp "\n]+>")))
+		(org-agenda-overriding-header "Unscheduled TODO entries: "))))))
+
+#+end_src
+
+** Key bindings
+#+begin_src emacs-lisp
+(global-set-key "\C-cl" 'org-store-link)
+(global-set-key "\C-ca" 'org-agenda)
+(global-set-key "\C-cb" 'org-iswitchb)
+(global-set-key "\C-cc" 'org-capture)
+#+end_src
+
+** Export backends
+
+#+begin_src emacs-lisp
+(setq org-export-backends '(ascii html icalendar latex md rst))
+#+end_src
+
+** Org babel languages
+
+#+begin_src emacs-lisp
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((python . t)
+   (C . t)
+   (calc . t)
+   (latex . t)
+   (java . t)
+   (ruby . t)
+   (scheme . t)
+   (sh . t)
+   (sqlite . t)
+   (js . t)))
+
+(defun my-org-confirm-babel-evaluate (lang body)
+  "Do not confirm evaluation for these languages."
+  (not (or (string= lang "C")
+           (string= lang "java")
+           (string= lang "python")
+           (string= lang "emacs-lisp")
+           (string= lang "sqlite"))))
+(setq org-confirm-babel-evaluate 'my-org-confirm-babel-evaluate)
+#+end_src
+
+** Org babel/source blocks
+
+Shamelessly stolen from here: [[https://github.com/danielmai/.emacs.d/blob/master/config.org][repo]]
+
+Citation:
+>> I like to have source blocks properly syntax highlighted and with the
+>> editing popup window staying within the same window so all the windows
+>> don't jump around. Also, having the top and bottom trailing lines in
+>> the block is a waste of space, so we can remove them.
+>> 
+>> I noticed that fontification doesn't work with markdown mode when the
+>> block is indented after editing it in the org src buffer---the leading
+>> #s for headers don't get fontified properly because they appear as Org
+>> comments. Setting ~org-src-preserve-indentation~ makes things
+>> consistent as it doesn't pad source blocks with leading spaces.
+
+#+begin_src emacs-lisp
+(setq org-src-fontify-natively t
+      org-src-window-setup 'current-window
+      org-src-strip-leading-and-trailing-blank-lines t
+      org-src-preserve-indentation t
+      org-src-tab-acts-natively t)
+#+end_src
+   
+* Programming
+** Common settings
+*** Tab-width
+#+begin_src emacs-lisp
+(setq-default tab-width 4)
+#+end_src
+
+*** Electric modes
+#+begin_src emacs-lisp
+(electric-pair-mode 1)
+(electric-indent-mode -1)
+#+end_src
+
+*** Comments
+
+I'm used to comment line with one keystroke without selecting them.
+And when I want to comment region I want all lines in that region be
+commented, not only the region itself
+
+Source: http://stackoverflow.com/a/20064658/243392
+
+#+begin_src emacs-lisp
+(defun comment-eclipse ()
+  (interactive)
+  (let ((start (line-beginning-position))
+        (end (line-end-position)))
+    (when (region-active-p)
+      (setq start (save-excursion
+                    (goto-char (region-beginning))
+                    (beginning-of-line)
+                    (point))
+            end (save-excursion
+                  (goto-char (region-end))
+                  (end-of-line)
+                  (point))))
+    (comment-or-uncomment-region start end)
+    (next-line)))
+
+
+(global-set-key (kbd "M-;") 'comment-eclipse)
+#+end_src
+
+*** which-function mode
+
+Displays the current function name in mode line
+#+begin_src emacs-lisp
+(which-function-mode 1)
+#+end_src
+
+** Python
+*** Python manual
+
+#+begin_src emacs-lisp
+(use-package python-info)
+(use-package python3-info)
+#+end_src
+    
+** C
+
+#+begin_src emacs-lisp
+(defun my-c-mode-hook ()
+  (define-key c-mode-map "\C-m" 'reindent-then-newline-and-indent)
+  (define-key c-mode-map "\C-ce" 'c-comment-edit))
+
+(setq-default
+  ;;tab-width 4
+  ;;c-tab-always-indent t
+  ;;c-indent-level 4
+  ;;c-continued-statement-offset 4
+  ;;c-brace-offset -4
+  ;;c-argdecl-indent 0
+  ;;c-label-offset -4
+  c-set-style "bsd"
+  c-basic-offset 4
+ )
+
+(add-hook 'c-mode-hook 'my-c-mode-hook)
+(add-hook 'c-mode-hook 'c-turn-on-eldoc-mode)
+#+end_src
+
+** Subword
+
+Improve navigation through CamelCase
+
+#+begin_src emacs-lisp
+(subword-mode t)
+#+end_src
+
+** Highligh TODO/FIXME/etc
+
+Highlighs "TODO" and other special words in comments and strings
+
+#+begin_src emacs-lisp
+(use-package hl-todo
+  :ensure t
+  :init
+  (defun hl-todo-coding-hook ()
+    (hl-todo-mode t))
+  (add-hook 'org-mode-hook 'hl-todo-coding-hook)
+  (add-hook 'python-mode-hook 'hl-todo-coding-hook)
+  (add-hook 'emacs-lisp-mode-hook 'hl-todo-coding-hook)
+  (add-hook 'ruby-mode-hook 'hl-todo-coding-hook)
+  (add-hook 'js2-mode-hook 'hl-todo-coding-hook)
+  (add-hook 'cl-mode-hook 'hl-todo-coding-hook)
+  (add-hook 'c-mode-hook 'hl-todo-coding-hook)
+  (add-hook 'lisp-mode-hook 'hl-todo-coding-hook))
+#+end_src
+   
+* Fixes to my specific system
+** Fix to rgrep due to "fish" shell being used
+
+#+begin_src emacs-lisp
+(setq grep-find-template "find . <X> -type f <F> -exec grep <C> -nH -e <R> '{}' +")
+#+end_src
+
+* Dired
+Following code makes commands "go to beginning of buffer" M-< and
+"got to end of buffer" M-> take to first and last file instead of
+going to the very beginning and the very end.
+
+#+begin_src emacs-lisp
+(require 'dired)  ; to avoid issue with dired not loaded yet
+
+(defun dired-back-to-top ()
+  (interactive)
+  (beginning-of-buffer)
+  (dired-next-line 4))
+
+(define-key dired-mode-map
+  (vector 'remap 'beginning-of-buffer) 'dired-back-to-top)
+
+(defun dired-jump-to-bottom ()
+  (interactive)
+  (end-of-buffer)
+  (dired-next-line -1))
+
+(define-key dired-mode-map
+  (vector 'remap 'end-of-buffer) 'dired-jump-to-bottom)
+#+end_src
+
