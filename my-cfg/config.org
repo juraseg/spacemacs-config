@@ -299,21 +299,19 @@ Displays the current function name in mode line
 ** C
 
 #+begin_src emacs-lisp
-(defun my-c-mode-hook ()
-  (define-key c-mode-map "\C-m" 'reindent-then-newline-and-indent)
-  (define-key c-mode-map "\C-ce" 'c-comment-edit))
+(setq-default c-default-style "linux"
+              c-basic-offset 4)
 
-(setq-default
-  ;;tab-width 4
-  ;;c-tab-always-indent t
-  ;;c-indent-level 4
-  ;;c-continued-statement-offset 4
-  ;;c-brace-offset -4
-  ;;c-argdecl-indent 0
-  ;;c-label-offset -4
-  c-set-style "bsd"
-  c-basic-offset 4
- )
+(defun my-c-mode-hook ()
+  (define-key c-mode-map (kbd "C-m") 'reindent-then-newline-and-indent)
+  (define-key c-mode-map (kbd "C-c e") 'c-comment-edit)
+  (define-key c-mode-map (kbd "RET") 'c-context-line-break)
+  )
+
+(evil-define-key 'insert c-mode-map
+  (kbd "C-m") 'reindent-then-newline-and-indent
+  (kbd "C-c e") 'c-comment-edit
+  (kbd "RET") 'c-context-line-break)
 
 (add-hook 'c-mode-hook 'my-c-mode-hook)
 (add-hook 'c-mode-hook 'c-turn-on-eldoc-mode)
