@@ -304,17 +304,20 @@ Displays the current function name in mode line
 
 (defun my-c-mode-hook ()
   (define-key c-mode-map (kbd "C-m") 'reindent-then-newline-and-indent)
-  (define-key c-mode-map (kbd "C-c e") 'c-comment-edit)
   (define-key c-mode-map (kbd "RET") 'c-context-line-break)
-  )
-
-(evil-define-key 'insert c-mode-map
-  (kbd "C-m") 'reindent-then-newline-and-indent
-  (kbd "C-c e") 'c-comment-edit
-  (kbd "RET") 'c-context-line-break)
+  (setq c-basic-offset 4)
+  (setq c-tab-always-indent t)
+  (setq c-indent-level 4)
+  (setq c-continued-statement-offset 4)
+  (setq c-brace-offset -4)
+  (setq c-argdecl-indent 0)
+  (setq c-label-offset -4)
+  (setq c-set-style "linux")
+  (c-toggle-auto-state 1))
 
 (add-hook 'c-mode-hook 'my-c-mode-hook)
-(add-hook 'c-mode-hook 'c-turn-on-eldoc-mode)
+;; TODO: layer with eldoc mode
+;;(add-hook 'c-mode-hook 'c-turn-on-eldoc-mode)
 #+end_src
 
 ** Subword
