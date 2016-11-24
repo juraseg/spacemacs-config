@@ -35,6 +35,7 @@ values."
      version-control
 
      osx
+     dash
 
      eyebrowse
 
@@ -56,6 +57,7 @@ values."
      python
      racket
      shell-scripts
+     sml
      sql
      )
    ;; List of additional packages that will be installed without being
