@@ -47,8 +47,11 @@ values."
      (c-c++ :variables
             c-c++-enable-clang-support t)
      cscope
+
      common-lisp
      emacs-lisp
+     evil-cleverparens
+
      go
      html
      javascript
@@ -59,6 +62,7 @@ values."
      shell-scripts
      sml
      sql
+     ruby
      )
    ;; List of additional packages that will be installed without being
    ;; wrapped in a layer. If you need some configuration for these
@@ -280,6 +284,11 @@ you should place your code here."
 
   (defvar private-org (expand-file-name "private.org" (expand-file-name "my-cfg" dotspacemacs-directory)))
   (org-babel-load-file private-org)
+
+  (spacemacs/toggle-evil-cleverparens-on)
+  (add-hook 'clojure-mode-hook #'evil-cleverparens-mode)
+  (add-hook 'emacs-lisp-mode-hook #'evil-cleverparens-mode)
+  (add-hook 'lisp-mode-hook #'evil-cleverparens-mode)
 
 )
 ;; Do not write anything past this comment. This is where Emacs will
