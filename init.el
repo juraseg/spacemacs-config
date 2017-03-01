@@ -37,8 +37,6 @@ values."
      osx
      dash
 
-     eyebrowse
-
      (shell :variables
             shell-default-shell 'eshell
             shell-enable-smart-eshell t
