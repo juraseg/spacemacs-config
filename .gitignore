@@ -4,3 +4,4 @@ my-cfg/private.*
 *~
 *.elc
 .DS_Store
+init.el
