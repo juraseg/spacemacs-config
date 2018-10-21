@@ -201,7 +201,7 @@ Fixes path for Emacs in Mac OSX
    (java . t)
    (ruby . t)
    (scheme . t)
-   (sh . t)
+   (shell . t)
    (sqlite . t)
    (js . t)))
 
